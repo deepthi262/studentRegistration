@@ -1,7 +1,7 @@
 <h1>Student Registration System </h1>
 
 The student profile is existing. The student needs to register for the exam at a specific centre at a specific date.
-So we have four types of requests coming from the upstream application into our SNS (notification sernvice)
+So we have four types of requests coming from the upstream application into our SNS (notification service)
 
 1. An SNS Topic is created with filter policies in place for the 4 business rules. i.e. the 4 type of requests:
    Registration(Bulk / single), Cancellation (Bulk / single)
@@ -16,14 +16,15 @@ So we have four types of requests coming from the upstream application into our 
 4. DLQ contains a retry logic . If request still fails, we max out. These failed(Maxed Out) requests are processed manually and analysed for missing data, and any incomplete imformation is updated and the request is resent with new data.
 
 5. Successful Lambda calls the required <b>SF </b>
-   SF has the <b>Lambdas</b>
+   SF has the 3 <b>Lambdas</b>
 
    1. validate the payload i.e the student attribute are validated for required fields,
-   2. do next level processing (an insertion in the DynamoDB registration table), registration processing, which result in . we get a Registration ID. along with success acknowlegdement sent to the team.
+   2. do next level processing (an insertion in the DynamoDB registration table), registration processing, which result in getting a Registration ID. along with success acknowlegdement sent to the team.
+   3. the student master table is updated with registration ID
 
 6. This registration ID along with the initial payment details are sent to the downstream application for payment processing.
 
-7. all payloads that are successfully registered are also converted to messages and stored in S# bucket. each student(studentID , RegistrationTime) is represented by one JSON.
+7. all payloads that are successfully registered are also converted to messages and stored in S3 bucket. each student(studentID , RegistrationTime) is represented by one JSON.
 
 8. there is a sheduled job which is running at a cutoff time morning and evening , which takes all the S3 Data, writes an Athena query. converts all the JSON records into one single CSV file , then this csv file is converted to the required format, as requested by the downstream application, which we place in a <b>S3 location (or FTP location)</b> with the help of assume role and Authorisation Token. So we create an archive file and delete all the data from our S3 Location.
 
